@@ -1,0 +1,747 @@
+@import "tailwindcss";
+@import "github-markdown-css/github-markdown-light.css";
+@import "./nord.css";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Nord Light Theme - 使用更淡的 Snow Storm 色系 */
+  --background: #ffffff;
+  --foreground: var(--nord0);
+  --primary: var(--nord10);
+  --primary-foreground: #ffffff;
+  --secondary: rgba(229, 233, 240, 0.5);
+  --secondary-foreground: var(--nord0);
+  --accent: rgba(136, 192, 208, 0.15);
+  --accent-foreground: var(--nord0);
+  --muted: rgba(229, 233, 240, 0.4);
+  --muted-foreground: var(--nord3);
+  --card: #ffffff;
+  --card-foreground: var(--nord0);
+  --border: rgba(216, 222, 233, 0.6);
+  --border-light: rgba(229, 233, 240, 0.5);
+  --input: rgba(229, 233, 240, 0.5);
+  --ring: var(--nord8);
+  --radius: 0.625rem;
+  --popover: #ffffff;
+  --popover-foreground: var(--nord0);
+  --destructive: var(--nord11);
+  --chart-1: var(--nord7);
+  --chart-2: var(--nord8);
+  --chart-3: var(--nord9);
+  --chart-4: var(--nord10);
+  --chart-5: var(--nord15);
+  --sidebar: rgba(229, 233, 240, 0.3);
+  --sidebar-foreground: var(--nord0);
+  --sidebar-primary: var(--nord10);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(136, 192, 208, 0.12);
+  --sidebar-accent-foreground: var(--nord0);
+  --sidebar-border: rgba(216, 222, 233, 0.5);
+  --sidebar-ring: var(--nord8);
+}
+
+.dark {
+  /* Nord Dark Theme - 使用 Polar Night 和 Frost 色系 */
+  --background: var(--nord0);
+  --foreground: var(--nord6);
+  --primary: var(--nord8);
+  --primary-foreground: var(--nord0);
+  --secondary: var(--nord1);
+  --secondary-foreground: var(--nord6);
+  --accent: var(--nord9);
+  --accent-foreground: var(--nord6);
+  --muted: var(--nord1);
+  --muted-foreground: var(--nord4);
+  --card: var(--nord1);
+  --card-foreground: var(--nord6);
+  --border: var(--nord2);
+  --border-light: var(--nord2);
+  --input: var(--nord2);
+  --ring: var(--nord8);
+  --popover: var(--nord1);
+  --popover-foreground: var(--nord6);
+  --destructive: var(--nord11);
+  --chart-1: var(--nord7);
+  --chart-2: var(--nord8);
+  --chart-3: var(--nord9);
+  --chart-4: var(--nord10);
+  --chart-5: var(--nord15);
+  --sidebar: var(--nord1);
+  --sidebar-foreground: var(--nord6);
+  --sidebar-primary: var(--nord8);
+  --sidebar-primary-foreground: var(--nord0);
+  --sidebar-accent: var(--nord2);
+  --sidebar-accent-foreground: var(--nord6);
+  --sidebar-border: var(--nord2);
+  --sidebar-ring: var(--nord8);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-border-light: var(--border-light);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-destructive: var(--destructive);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+.border {
+  border-color: var(--border-light) !important;
+}
+
+/* Markdown Body Styles - Light Mode */
+.markdown-body {
+  color: var(--nord0) !important;
+  background-color: transparent !important;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  color: var(--nord0) !important;
+  border-bottom-color: rgba(216, 222, 233, 0.5) !important;
+}
+
+.markdown-body p {
+  color: var(--nord1) !important;
+}
+
+.markdown-body strong {
+  color: var(--nord0) !important;
+}
+
+.markdown-body a {
+  color: var(--nord10) !important;
+  text-decoration: none !important;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline !important;
+}
+
+.markdown-body code {
+  background-color: rgba(129, 161, 193, 0.15) !important;
+  color: var(--nord0) !important;
+}
+
+.markdown-body pre {
+  background-color: var(--nord0) !important;
+  border: 1px solid var(--nord2) !important;
+}
+
+.markdown-body pre > code {
+  color: var(--nord6) !important;
+  background-color: transparent !important;
+}
+
+.markdown-body hr {
+  background-color: rgba(216, 222, 233, 0.6) !important;
+  height: 0.25em !important;
+  border: none !important;
+}
+
+.markdown-body blockquote {
+  border-left-color: var(--nord8) !important;
+  color: var(--nord2) !important;
+  background-color: rgba(136, 192, 208, 0.08) !important;
+}
+
+.markdown-body table {
+  border-color: rgba(216, 222, 233, 0.6) !important;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+  border-color: rgba(216, 222, 233, 0.6) !important;
+}
+
+.markdown-body table th {
+  background-color: rgba(229, 233, 240, 0.5) !important;
+  color: var(--nord0) !important;
+}
+
+.markdown-body table tr {
+  background-color: transparent !important;
+}
+
+.markdown-body table tr:nth-child(2n) {
+  background-color: rgba(229, 233, 240, 0.3) !important;
+}
+
+.markdown-body img {
+  background-color: transparent !important;
+}
+
+.markdown-body kbd {
+  background-color: rgba(229, 233, 240, 0.5) !important;
+  border-color: rgba(216, 222, 233, 0.6) !important;
+  color: var(--nord0) !important;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin-top: 0 !important;
+  margin-bottom: 16px !important;
+  padding-left: 2em !important;
+  color: var(--nord1) !important;
+}
+
+.markdown-body ul {
+  list-style-type: disc !important;
+}
+
+.markdown-body ol {
+  list-style-type: decimal !important;
+}
+
+.markdown-body ul ul,
+.markdown-body ul ol,
+.markdown-body ol ol,
+.markdown-body ol ul {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-left: 2em !important;
+}
+
+.markdown-body ul ul {
+  list-style-type: circle !important;
+}
+
+.markdown-body ul ul ul {
+  list-style-type: square !important;
+}
+
+.markdown-body ol ol {
+  list-style-type: lower-alpha !important;
+}
+
+.markdown-body ol ol ol {
+  list-style-type: lower-roman !important;
+}
+
+.markdown-body li {
+  margin-top: 0.25em !important;
+  margin-bottom: 0.25em !important;
+  color: var(--nord1) !important;
+  line-height: 1.6 !important;
+}
+
+.markdown-body li > p {
+  margin-top: 0.5em !important;
+  margin-bottom: 0.5em !important;
+}
+
+.markdown-body li + li {
+  margin-top: 0.25em !important;
+}
+
+/* Markdown Body Styles - Dark Mode */
+.dark .markdown-body,
+html.dark .markdown-body {
+  color: var(--nord4) !important;
+  background-color: transparent !important;
+}
+
+.dark .markdown-body h1,
+.dark .markdown-body h2,
+.dark .markdown-body h3,
+.dark .markdown-body h4,
+.dark .markdown-body h5,
+.dark .markdown-body h6,
+html.dark .markdown-body h1,
+html.dark .markdown-body h2,
+html.dark .markdown-body h3,
+html.dark .markdown-body h4,
+html.dark .markdown-body h5,
+html.dark .markdown-body h6 {
+  color: var(--nord6) !important;
+  border-bottom-color: var(--nord2) !important;
+}
+
+.dark .markdown-body h1,
+html.dark .markdown-body h1 {
+  border-bottom-color: var(--nord2) !important;
+}
+
+.dark .markdown-body h2,
+html.dark .markdown-body h2 {
+  border-bottom-color: var(--nord2) !important;
+}
+
+.dark .markdown-body p,
+html.dark .markdown-body p {
+  color: var(--nord4) !important;
+}
+
+.dark .markdown-body strong,
+html.dark .markdown-body strong {
+  color: var(--nord6) !important;
+}
+
+.dark .markdown-body a,
+html.dark .markdown-body a {
+  color: var(--nord8) !important;
+  text-decoration: none !important;
+}
+
+.dark .markdown-body a:hover,
+html.dark .markdown-body a:hover {
+  text-decoration: underline !important;
+}
+
+.dark .markdown-body code,
+html.dark .markdown-body code {
+  background-color: rgba(76, 86, 106, 0.4) !important;
+  color: var(--nord4) !important;
+}
+
+.dark .markdown-body pre,
+html.dark .markdown-body pre {
+  background-color: var(--nord0) !important;
+  border: 1px solid var(--nord2) !important;
+}
+
+.dark .markdown-body pre > code,
+html.dark .markdown-body pre > code {
+  color: var(--nord6) !important;
+  background-color: transparent !important;
+}
+
+.dark .markdown-body hr,
+html.dark .markdown-body hr {
+  background-color: var(--nord2) !important;
+  height: 0.25em !important;
+  border: none !important;
+}
+
+.dark .markdown-body blockquote,
+html.dark .markdown-body blockquote {
+  border-left-color: var(--nord8) !important;
+  color: var(--nord4) !important;
+  background-color: rgba(136, 192, 208, 0.1) !important;
+}
+
+.dark .markdown-body table,
+html.dark .markdown-body table {
+  border-color: var(--nord2) !important;
+}
+
+.dark .markdown-body table th,
+.dark .markdown-body table td,
+html.dark .markdown-body table th,
+html.dark .markdown-body table td {
+  border-color: var(--nord2) !important;
+}
+
+.dark .markdown-body table th,
+html.dark .markdown-body table th {
+  background-color: var(--nord1) !important;
+  color: var(--nord6) !important;
+}
+
+.dark .markdown-body table tr,
+html.dark .markdown-body table tr {
+  background-color: var(--nord0) !important;
+}
+
+.dark .markdown-body table tr:nth-child(2n),
+html.dark .markdown-body table tr:nth-child(2n) {
+  background-color: var(--nord1) !important;
+}
+
+.dark .markdown-body img,
+html.dark .markdown-body img {
+  background-color: transparent !important;
+}
+
+.dark .markdown-body kbd,
+html.dark .markdown-body kbd {
+  background-color: var(--nord1) !important;
+  border-color: var(--nord2) !important;
+  color: var(--nord4) !important;
+}
+
+.dark .markdown-body ul,
+html.dark .markdown-body ul,
+.dark .markdown-body ol,
+html.dark .markdown-body ol {
+  margin-top: 0 !important;
+  margin-bottom: 16px !important;
+  padding-left: 2em !important;
+  color: var(--nord4) !important;
+}
+
+.dark .markdown-body ul,
+html.dark .markdown-body ul {
+  list-style-type: disc !important;
+}
+
+.dark .markdown-body ol,
+html.dark .markdown-body ol {
+  list-style-type: decimal !important;
+}
+
+.dark .markdown-body ul ul,
+.dark .markdown-body ul ol,
+.dark .markdown-body ol ol,
+.dark .markdown-body ol ul,
+html.dark .markdown-body ul ul,
+html.dark .markdown-body ul ol,
+html.dark .markdown-body ol ol,
+html.dark .markdown-body ol ul {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-left: 2em !important;
+}
+
+.dark .markdown-body ul ul,
+html.dark .markdown-body ul ul {
+  list-style-type: circle !important;
+}
+
+.dark .markdown-body ul ul ul,
+html.dark .markdown-body ul ul ul {
+  list-style-type: square !important;
+}
+
+.dark .markdown-body ol ol,
+html.dark .markdown-body ol ol {
+  list-style-type: lower-alpha !important;
+}
+
+.dark .markdown-body ol ol ol,
+html.dark .markdown-body ol ol ol {
+  list-style-type: lower-roman !important;
+}
+
+.dark .markdown-body li,
+html.dark .markdown-body li {
+  margin-top: 0.25em !important;
+  margin-bottom: 0.25em !important;
+  color: var(--nord4) !important;
+  line-height: 1.6 !important;
+}
+
+.dark .markdown-body li > p,
+html.dark .markdown-body li > p {
+  margin-top: 0.5em !important;
+  margin-bottom: 0.5em !important;
+}
+
+.dark .markdown-body li + li,
+html.dark .markdown-body li + li {
+  margin-top: 0.25em !important;
+}
+
+/* Card Styles */
+.card {
+  border: 1px solid rgba(216, 222, 233, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background-color: #ffffff;
+}
+
+.dark .card {
+  border-color: var(--nord2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  background-color: var(--nord1);
+}
+
+.markdown-body {
+  background-color: transparent;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  position: relative;
+}
+
+.markdown-body .anchor {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem !important;
+  padding: 0 0.25rem !important;
+  float: none !important;
+  position: relative !important;
+  left: auto !important;
+  opacity: 0;
+  transition: opacity 0.2s;
+  vertical-align: middle;
+  text-decoration: none !important;
+}
+
+.markdown-body h1:hover .anchor,
+.markdown-body h2:hover .anchor,
+.markdown-body h3:hover .anchor,
+.markdown-body h4:hover .anchor,
+.markdown-body h5:hover .anchor,
+.markdown-body h6:hover .anchor {
+  opacity: 0.5;
+}
+
+.markdown-body .anchor:hover {
+  opacity: 1;
+}
+
+.markdown-body .anchor::before {
+  content: "#";
+  font-size: 0.8em;
+  color: var(--nord8);
+}
+
+.markdown-body table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: auto;
+}
+
+[data-rehype-pretty-code-figure] {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.markdown-body [data-rehype-pretty-code-figure] {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.markdown-body figure {
+  margin: 0 !important;
+}
+
+.markdown-body pre {
+  overflow-x: auto;
+  margin: 0 !important;
+  padding: 1rem !important;
+  background: var(--nord0);
+  border-radius: 6px;
+  border: none !important;
+}
+
+.markdown-body pre > code {
+  display: block;
+  font-size: 14px;
+  line-height: 1.6;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.markdown-body code {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+  font-size: 0.9em;
+}
+
+.markdown-body :not(pre) > code {
+  padding: 0.2em 0.4em;
+  background-color: rgba(129, 161, 193, 0.2);
+  border-radius: 6px;
+  border: none !important;
+}
+
+.dark .markdown-body :not(pre) > code {
+  background-color: rgba(76, 86, 106, 0.4);
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* rehype-pretty-code styles */
+[data-rehype-pretty-code-figure] pre {
+  margin: 0 !important;
+  padding: 1rem !important;
+  background: var(--nord0) !important;
+  border-radius: 6px;
+  border: none !important;
+}
+
+[data-rehype-pretty-code-figure] code {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  background: transparent !important;
+  padding: 0 !important;
+  color: inherit !important;
+}
+
+[data-rehype-pretty-code-figure] [data-line] {
+  padding: 0 0.5em;
+  border-left: 2px solid transparent;
+}
+
+[data-rehype-pretty-code-figure] [data-highlighted-chars] {
+  background-color: rgba(136, 192, 208, 0.15) !important;
+  border-radius: 2px;
+  box-shadow: none;
+}
+
+.dark [data-rehype-pretty-code-figure] [data-highlighted-chars] {
+  background-color: rgba(136, 192, 208, 0.2) !important;
+}
+
+[data-rehype-pretty-code-figure] [data-highlighted-line] {
+  background-color: rgba(136, 192, 208, 0.08);
+  border-left-color: var(--nord8);
+}
+
+.dark [data-rehype-pretty-code-figure] [data-highlighted-line] {
+  background-color: rgba(136, 192, 208, 0.12);
+}
+
+[data-rehype-pretty-code-figure] [data-line-numbers] {
+  color: var(--nord3);
+  user-select: none;
+  padding-right: 1em;
+  border-right: 1px solid var(--nord2);
+  margin-right: 0.5em;
+}
+
+/* Table of Contents Styles */
+.toc-active {
+  background-color: rgba(143, 188, 187, 0.2) !important;
+  color: var(--nord10) !important;
+  border-left: 2px solid var(--nord8);
+}
+
+.dark .toc-active {
+  background-color: rgba(143, 188, 187, 0.15) !important;
+  color: var(--nord8) !important;
+  border-left: 2px solid var(--nord8);
+}
+
+/* Button Styles Enhancement */
+.btn-nord {
+  background-color: var(--nord10);
+  color: var(--nord6);
+  transition: all 0.2s ease;
+}
+
+.btn-nord:hover {
+  background-color: var(--nord9);
+}
+
+.dark .btn-nord {
+  background-color: var(--nord8);
+  color: var(--nord0);
+}
+
+.dark .btn-nord:hover {
+  background-color: var(--nord7);
+}
+
+/* Badge Styles */
+.badge-nord-primary {
+  background-color: var(--nord10);
+  color: var(--nord6);
+}
+
+.badge-nord-secondary {
+  background-color: var(--nord5);
+  color: var(--nord0);
+}
+
+.dark .badge-nord-secondary {
+  background-color: var(--nord2);
+  color: var(--nord6);
+}
+
+/* Icon Colors */
+.icon-nord {
+  color: var(--nord3);
+}
+
+.dark .icon-nord {
+  color: var(--nord4);
+}
+
+.icon-nord-primary {
+  color: var(--nord10);
+}
+
+.dark .icon-nord-primary {
+  color: var(--nord8);
+}
+
+.icon-nord-accent {
+  color: var(--nord8);
+}
+
+/* Input Styles */
+.input-nord {
+  background-color: rgba(229, 233, 240, 0.4);
+  border-color: rgba(216, 222, 233, 0.6);
+  color: var(--nord0);
+}
+
+.input-nord:focus {
+  border-color: var(--nord8);
+  ring-color: var(--nord8);
+  background-color: #ffffff;
+}
+
+.dark .input-nord {
+  background-color: var(--nord1);
+  border-color: var(--nord2);
+  color: var(--nord6);
+}
+
+.dark .input-nord:focus {
+  border-color: var(--nord8);
+  ring-color: var(--nord8);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
