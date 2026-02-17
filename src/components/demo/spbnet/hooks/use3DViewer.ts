@@ -62,60 +62,58 @@ export function useAttentionViewer(
   attnViewerRef: MutableRefObject<HTMLDivElement | null>
 ) {
   const attnViewer = useRef<any>(null)
+  const lastXyz = useRef<string>('')
 
   useEffect(() => {
-    if (xyz && attnViewerRef.current && window.$3Dmol && window.nj) {
-      const element = attnViewerRef.current
-      if (!element.viewer) {
-        const viewer = window.$3Dmol.createViewer(element)
-        element.viewer = viewer
-        attnViewer.current = viewer
-      }
-      const viewer = attnViewer.current
+    if (!xyz || !attnViewerRef.current || !window.$3Dmol || !window.nj) return
+
+    const element = attnViewerRef.current
+    if (!element.viewer) {
+      const viewer = window.$3Dmol.createViewer(element)
+      element.viewer = viewer
+      attnViewer.current = viewer
+    }
+    const viewer = attnViewer.current
+
+    if (lastXyz.current !== xyz) {
       viewer.removeAllModels()
       viewer.addModel(xyz, 'xyz')
       viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { radius: 0.1 } })
       viewer.zoomTo()
       viewer.render()
+      lastXyz.current = xyz
     }
-  }, [xyz, attnViewerRef])
 
-  useEffect(() => {
-    if (xyz && attnViewerRef.current && window.$3Dmol && window.nj) {
-      const viewer = attnViewer.current
-      if (!viewer) return
+    const attn = attns[attnTask]
+    if (!attn || viewer.models.length === 0) {
+      return
+    }
 
-      const attn = attns[attnTask]
-      if (!attn) return
+    viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { radius: 0.1 } })
 
-      viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { radius: 0.1 } })
+    let nj_attn = window.nj.array(attn)
+    const threshold = findPercentile(attn, percentile)
+    const [mean, std] = [nj_attn.mean(), nj_attn.std()]
 
-      if (viewer.models.length === 0) return
+    const adjustedRatio = (ratio / 100) * 5 * 1.3 / (std / mean)
+    const processedAttn = attn.map((val) => (val > threshold ? val : 0))
+    nj_attn = window.nj.array(processedAttn)
+    nj_attn = nj_attn.divide(mean)
+    nj_attn = nj_attn.pow(adjustedRatio)
 
-      let nj_attn = window.nj.array(attn)
-      const threshold = findPercentile(attn, percentile)
-      const [mean, std] = [nj_attn.mean(), nj_attn.std()]
+    const data = viewer.models[0].selectedAtoms({})
+    const adjustedMax = (max / 100) * 5
 
-      const adjustedRatio = (ratio / 100) * 5 * 1.3 / (std / mean)
-      const processedAttn = attn.map((val) => (val > threshold ? val : 0))
-      nj_attn = window.nj.array(processedAttn)
-      nj_attn = nj_attn.divide(mean)
-      nj_attn = nj_attn.pow(adjustedRatio)
-
-      const data = viewer.models[0].selectedAtoms({})
-      const adjustedMax = (max / 100) * 5
-
-      for (let i = 0; i < data.length; i++) {
-        let a = nj_attn.get(i)
-        if (a > adjustedMax) {
-          a = adjustedMax
-        }
-        if (data[i].atom === 'H') continue
-        data[i].style.sphere.radius = 0.5 * a
+    for (let i = 0; i < data.length; i++) {
+      let a = nj_attn.get(i)
+      if (a > adjustedMax) {
+        a = adjustedMax
       }
-
-      viewer.zoomTo()
-      viewer.render()
+      if (data[i].atom === 'H') continue
+      data[i].style.sphere.radius = 0.5 * a
     }
+
+    viewer.zoomTo()
+    viewer.render()
   }, [xyz, attns, attnTask, ratio, percentile, max, attnViewerRef])
 }

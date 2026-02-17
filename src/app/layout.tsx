@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navbar } from '@/components/navbar'
 import { ThemeProvider } from '@/components/theme-provider'
+import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 import 'github-markdown-css/github-markdown-light.css'
 
@@ -24,6 +25,7 @@ export default function RootLayout({
               {children}
             </main>
           </div>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

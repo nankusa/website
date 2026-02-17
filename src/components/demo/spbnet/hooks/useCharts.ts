@@ -1,5 +1,6 @@
 import { useEffect, useRef, MutableRefObject } from 'react'
 import * as echarts from 'echarts'
+import { toast } from 'sonner'
 import { sourceTypes } from '../constants'
 
 export function useBoxPlot(
@@ -162,35 +163,68 @@ export function useEnergyChart(
 ) {
   const energyChartInstance = useRef<echarts.ECharts | null>(null)
 
+  const isValidEnergy = (data: any): boolean => {
+    if (!data || !Array.isArray(data) || data.length === 0) return false
+    if (!Array.isArray(data[0]) || data[0].length === 0) return false
+    if (!Array.isArray(data[0][0]) || data[0][0].length === 0) return false
+    return true
+  }
+
+  const getEnergyValue = (data: any, i: number, j: number, k: number): number => {
+    const val = data[i][j][k]
+    if (Array.isArray(val)) {
+      return val[0]
+    }
+    return val
+  }
+
   useEffect(() => {
-    if (!showEnergy || !energy || !energyChartRef.current) return
+    if (!showEnergy) return
+    
+    if (!isValidEnergy(energy)) {
+      if (energy !== null && energy !== undefined) {
+        toast.error('Invalid energy data received', {
+          description: 'The PES (Potential Energy Surface) data is malformed or incomplete. Please try reloading.',
+          duration: 5000,
+        })
+      }
+      return
+    }
+    
+    if (!energyChartRef.current) return
 
     const data = []
     let minVal = 100000
     let maxVal = -100000
 
-    for (let i = 0; i < 30; i++) {
-      for (let j = 0; j < 30; j++) {
-        for (let k = 0; k < 30; k++) {
-          const value = energy[i][j][k]
+    const dimX = energy.length
+    const dimY = energy[0].length
+    const dimZ = energy[0][0].length
+
+    for (let i = 0; i < dimX; i++) {
+      for (let j = 0; j < dimY; j++) {
+        for (let k = 0; k < dimZ; k++) {
+          const value = getEnergyValue(energy, i, j, k)
           if (value > maxVal) {
             maxVal = value
           }
           if (value < minVal) {
             minVal = value
           }
-          data.push([i, j, k, value])
+          if (Math.abs(value) > 1e-6) {
+            data.push([i, j, k, value])
+          }
         }
       }
     }
 
     const option: echarts.EChartsOption = {
       visualMap: {
-        show: false,
-        min: minVal * 10,
-        max: 1000000,
+        show: true,
+        min: minVal,
+        max: maxVal,
         inRange: {
-          symbolSize: [0.5, 25],
+          symbolSize: [3, 20],
           color: [
             '#313695',
             '#4575b4',
@@ -204,8 +238,9 @@ export function useEnergyChart(
             '#d73027',
             '#a50026',
           ],
-          colorAlpha: [0.2, 1],
+          colorAlpha: [0.5, 1],
         },
+        dimension: 3,
       },
       xAxis3D: {
         type: 'value',
@@ -268,109 +303,122 @@ export function useEnergyChart(
   }, [energy, showEnergy, energyChartRef])
 
   useEffect(() => {
-    if (showEnergy && energyChartRef.current && energy) {
-      if (energyChartInstance.current) {
-        energyChartInstance.current.dispose()
-      }
-      energyChartInstance.current = null
-      
-      const timeoutIds: number[] = []
-      
-      timeoutIds.push(window.setTimeout(() => {
-        if (energyChartRef.current) {
-          energyChartInstance.current = echarts.init(energyChartRef.current)
-          
-          const data = []
-          let minVal = 100000
-          let maxVal = -100000
+    if (!showEnergy) return
+    
+    if (!isValidEnergy(energy)) {
+      return
+    }
+    
+    if (!energyChartRef.current || !energy) return
+    
+    if (energyChartInstance.current) {
+      energyChartInstance.current.dispose()
+    }
+    energyChartInstance.current = null
+    
+    const timeoutIds: number[] = []
+    
+    timeoutIds.push(window.setTimeout(() => {
+      if (energyChartRef.current) {
+        energyChartInstance.current = echarts.init(energyChartRef.current)
+        
+        const data = []
+        let minVal = 100000
+        let maxVal = -100000
 
-          for (let i = 0; i < 30; i++) {
-            for (let j = 0; j < 30; j++) {
-              for (let k = 0; k < 30; k++) {
-                const value = energy[i][j][k]
-                if (value > maxVal) {
-                  maxVal = value
-                }
-                if (value < minVal) {
-                  minVal = value
-                }
+        const dimX = energy.length
+        const dimY = energy[0].length
+        const dimZ = energy[0][0].length
+
+        for (let i = 0; i < dimX; i++) {
+          for (let j = 0; j < dimY; j++) {
+            for (let k = 0; k < dimZ; k++) {
+              const value = getEnergyValue(energy, i, j, k)
+              if (value > maxVal) {
+                maxVal = value
+              }
+              if (value < minVal) {
+                minVal = value
+              }
+              if (Math.abs(value) > 1e-6) {
                 data.push([i, j, k, value])
               }
             }
           }
-
-          const option: echarts.EChartsOption = {
-            visualMap: {
-              show: false,
-              min: minVal * 10,
-              max: 1000000,
-              inRange: {
-                symbolSize: [0.5, 25],
-                color: [
-                  '#313695',
-                  '#4575b4',
-                  '#74add1',
-                  '#abd9e9',
-                  '#e0f3f8',
-                  '#ffffbf',
-                  '#fee090',
-                  '#fdae61',
-                  '#f46d43',
-                  '#d73027',
-                  '#a50026',
-                ],
-                colorAlpha: [0.2, 1],
-              },
-            },
-            xAxis3D: {
-              type: 'value',
-            },
-            yAxis3D: {
-              type: 'value',
-            },
-            zAxis3D: {
-              type: 'value',
-            },
-            grid3D: {
-              axisLine: {
-                lineStyle: { color: '#888' },
-              },
-              axisPointer: {
-                lineStyle: { color: '#888' },
-              },
-              viewControl: {},
-            },
-            series: [
-              {
-                type: 'scatter3D',
-                name: 'Energy [kJ/mol]',
-                data: data,
-              },
-            ] as any,
-            tooltip: {
-              textStyle: {
-                color: '#888',
-              },
-            },
-          }
-          
-          energyChartInstance.current.setOption(option, true)
-          
-          timeoutIds.push(window.setTimeout(() => {
-            energyChartInstance.current?.resize()
-          }, 50))
-          timeoutIds.push(window.setTimeout(() => {
-            energyChartInstance.current?.resize()
-          }, 150))
-          timeoutIds.push(window.setTimeout(() => {
-            energyChartInstance.current?.resize()
-          }, 300))
         }
-      }, 10))
-      
-      return () => {
-        timeoutIds.forEach(id => clearTimeout(id))
+
+        const option: echarts.EChartsOption = {
+          visualMap: {
+            show: true,
+            min: minVal,
+            max: maxVal,
+            inRange: {
+              symbolSize: [3, 20],
+              color: [
+                '#313695',
+                '#4575b4',
+                '#74add1',
+                '#abd9e9',
+                '#e0f3f8',
+                '#ffffbf',
+                '#fee090',
+                '#fdae61',
+                '#f46d43',
+                '#d73027',
+                '#a50026',
+              ],
+              colorAlpha: [0.5, 1],
+            },
+            dimension: 3,
+          },
+          xAxis3D: {
+            type: 'value',
+          },
+          yAxis3D: {
+            type: 'value',
+          },
+          zAxis3D: {
+            type: 'value',
+          },
+          grid3D: {
+            axisLine: {
+              lineStyle: { color: '#888' },
+            },
+            axisPointer: {
+              lineStyle: { color: '#888' },
+            },
+            viewControl: {},
+          },
+          series: [
+            {
+              type: 'scatter3D',
+              name: 'Energy [kJ/mol]',
+              data: data,
+            },
+          ] as any,
+          tooltip: {
+            textStyle: {
+              color: '#888',
+            },
+          },
+        }
+        
+        energyChartInstance.current.setOption(option, true)
+        
+        timeoutIds.push(window.setTimeout(() => {
+          energyChartInstance.current?.resize()
+        }, 50))
+        timeoutIds.push(window.setTimeout(() => {
+          energyChartInstance.current?.resize()
+        }, 150))
+        timeoutIds.push(window.setTimeout(() => {
+          energyChartInstance.current?.resize()
+        }, 300))
       }
+    }, 10))
+    
+    return () => {
+      timeoutIds.forEach(id => clearTimeout(id))
     }
   }, [showEnergy, energy, energyChartRef])
 }

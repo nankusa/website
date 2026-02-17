@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Upload, Loader2, Box } from 'lucide-react'
+import { toast } from 'sonner'
 import 'echarts-gl'
 
 import './types'
@@ -22,7 +23,9 @@ export function SpbNetDemo() {
   const [cifStr, setCifStr] = useState<string | null>(null)
   const [taskType, setTaskType] = useState('adsorption')
   const [attnTask, setAttnTask] = useState('CO2')
-  const [loading, setLoading] = useState(false)
+  const [loadingStructure, setLoadingStructure] = useState(false)
+  const [loadingProperties, setLoadingProperties] = useState(false)
+  const [loadingAttn, setLoadingAttn] = useState(false)
   const [properties, setProperties] = useState<Record<string, number>>({})
   const [modalData, setModalData] = useState<ModalData>({
     xyz: '',
@@ -51,102 +54,174 @@ export function SpbNetDemo() {
   useBoxPlot(taskType, tasks, properties, currentLabels, cifid, boxPlotRef)
   useEnergyChart(showEnergy, modalData.energy, energyChartRef)
 
-  const fetchModalData = useCallback(async () => {
+  const fetchModalData = async (id: string) => {
+    setLoadingStructure(true)
     try {
-      const data = await get('/modal', { cifid })
+      const data = await get('/modal', { cifid: id })
       setModalData((prev) => ({
         ...prev,
         xyz: data.xyz,
         energy: data.energy,
       }))
     } catch (err) {
+      toast.error('Failed to fetch structure data', {
+        description: 'Unable to load molecular structure. Please check the CIF ID or try again.',
+        duration: 5000,
+      })
       console.error('Failed to fetch modal data:', err)
+    } finally {
+      setLoadingStructure(false)
     }
-  }, [cifid, get])
+  }
 
-  const fetchProperties = useCallback(async () => {
-    setLoading(true)
+  const fetchProperties = async (id: string) => {
+    setLoadingProperties(true)
     try {
       const props: Record<string, number> = {}
       for (const task of tasks) {
         const taskParam = task.replace('/', '')
-        const data = await get('/property', { cifid, task: taskParam })
+        const data = await get('/property', { cifid: id, task: taskParam })
         props[task] = task === 'Tsd' ? 0.01 * data.value : data.value
       }
       setProperties(props)
     } catch (err) {
+      toast.error('Failed to fetch property predictions', {
+        description: 'Unable to calculate material properties. Please try again.',
+        duration: 5000,
+      })
       console.error('Failed to fetch properties:', err)
     } finally {
-      setLoading(false)
+      setLoadingProperties(false)
     }
-  }, [cifid, tasks, get])
+  }
 
-  const fetchAttn = useCallback(async () => {
+  const fetchAttn = async (id: string, task: string) => {
+    setLoadingAttn(true)
     try {
-      const taskParam = attnTask.replace('/', '')
-      const data = await get('/attn', { cifid, task: taskParam })
+      const taskParam = task.replace('/', '')
+      const data = await get('/attn', { cifid: id, task: taskParam })
       setModalData((prev) => ({
         ...prev,
         attns: {
           ...prev.attns,
-          [attnTask]: data.attn,
+          [task]: data.attn,
         },
       }))
     } catch (err) {
+      toast.error('Failed to fetch attention data', {
+        description: 'Unable to compute attention scores. Please try again.',
+        duration: 5000,
+      })
       console.error('Failed to fetch attention:', err)
+    } finally {
+      setLoadingAttn(false)
     }
-  }, [cifid, attnTask, get])
+  }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.name.endsWith('.cif')) {
-      console.error('Error: Please select a .cif file')
+      toast.error('Invalid file format', {
+        description: 'Please select a .cif file (Crystallographic Information File).',
+        duration: 5000,
+      })
       return
     }
     const reader = new FileReader()
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const content = event.target?.result as string
       const id = file.name.slice(0, file.name.length - 4)
-      setCifid(id)
-      setCifStr(content)
+      
+      setLoadingStructure(true)
+      setLoadingProperties(true)
+      setLoadingAttn(true)
+      
+      try {
+        const data = await post('/cif', { cifid: id, cif_str: content })
+        const newCifid = data.cifid
+        
+        const [modalData, attnData, propsData] = await Promise.all([
+          get('/modal', { cifid: newCifid }),
+          get('/attn', { cifid: newCifid, task: attnTask.replace('/', '') }),
+          (async () => {
+            const props: Record<string, number> = {}
+            for (const task of tasks) {
+              const taskParam = task.replace('/', '')
+              const result = await get('/property', { cifid: newCifid, task: taskParam })
+              props[task] = task === 'Tsd' ? 0.01 * result.value : result.value
+            }
+            return props
+          })(),
+        ])
+        
+        setCifid(newCifid)
+        setCifStr(null)
+        setModalData({
+          xyz: modalData.xyz,
+          energy: modalData.energy,
+          attns: { [attnTask]: attnData.attn },
+        })
+        setProperties(propsData)
+        
+        toast.success('CIF file uploaded', {
+          description: `Successfully processed "${id}.cif"`,
+          duration: 3000,
+        })
+      } catch (err) {
+        toast.error('Failed to process CIF file', {
+          description: 'The server could not process the crystal structure. Please verify the CIF format.',
+          duration: 5000,
+        })
+        console.error('Failed to upload CIF:', err)
+      } finally {
+        setLoadingStructure(false)
+        setLoadingProperties(false)
+        setLoadingAttn(false)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
+      }
     }
     reader.readAsText(file)
   }
 
-  const handleCifUpload = async () => {
-    setLoading(true)
-    try {
-      const payload = cifStr ? { cifid, cif_str: cifStr } : { cifid }
-      const data = await post('/cif', payload)
-      setCifid(data.cifid)
-      setCifStr(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    } catch (err) {
-      console.error('Failed to upload CIF:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    if (cifid) {
-      fetchModalData()
-      fetchAttn()
-      fetchProperties()
+    const loadCifData = async () => {
+      setLoadingStructure(true)
+      setLoadingProperties(true)
+      setLoadingAttn(true)
+      try {
+        await post('/cif', { cifid })
+        await Promise.all([
+          fetchModalData(cifid),
+          fetchAttn(cifid, attnTask),
+          fetchProperties(cifid),
+        ])
+      } catch (err) {
+        toast.error('Failed to load CIF data', {
+          description: 'Unable to process the crystal structure. Please check if the CIF ID exists.',
+          duration: 5000,
+        })
+        console.error('Failed to load CIF data:', err)
+        setLoadingStructure(false)
+        setLoadingProperties(false)
+        setLoadingAttn(false)
+      }
     }
+    loadCifData()
   }, [cifid])
 
   useEffect(() => {
     setAttnTask(tasks[0])
-    fetchProperties()
+    fetchProperties(cifid)
   }, [taskType])
 
   useEffect(() => {
-    fetchAttn()
+    fetchAttn(cifid, attnTask)
   }, [attnTask])
+
+  const isLoading = loadingStructure || loadingProperties || loadingAttn
 
   return (
     <div className="space-y-6 w-full">
@@ -163,51 +238,39 @@ export function SpbNetDemo() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex flex-wrap gap-4 items-end">
-                <div className="space-y-2 flex-1 min-w-[200px]">
-                  <Label htmlFor="cifid">CIF ID / Structure Name</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="cifid"
-                      value={cifid}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        setCifid(e.target.value)
-                        setCifStr(null)
-                      }}
-                      placeholder="Enter CIF ID"
-                    />
-                    <Button onClick={handleCifUpload} disabled={loading}>
-                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                    </Button>
+              <div className="flex flex-col sm:flex-row gap-4 items-end">
+                <div className="space-y-2 flex-1">
+                  <Label className="text-sm font-medium">CIF ID</Label>
+                  <div className="relative">
+                    <div className="h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm">
+                      {cifid}
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Upload CIF File</Label>
-                  <div className="relative">
-                    <Button asChild>
-                      <label>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Choose File
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept=".cif"
-                          onChange={handleFileChange}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
-                      </label>
-                    </Button>
-                  </div>
-                  {cifStr && (
-                    <p className="text-sm text-green-600 mt-1">
-                      File loaded: {cifid}.cif
-                    </p>
-                  )}
+                  <Button asChild className="relative h-10 gap-2" disabled={isLoading}>
+                    <label className="cursor-pointer">
+                      {isLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4" />
+                      )}
+                      {isLoading ? 'Processing...' : 'Upload CIF'}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".cif"
+                        onChange={handleFileChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        disabled={isLoading}
+                      />
+                    </label>
+                  </Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Example Structures</Label>
+                <Label className="text-sm font-medium">Example Structures</Label>
                 <div className="flex flex-wrap gap-2">
                   {EXAMPLE_CIFS.map((exampleCif) => (
                     <Button
@@ -215,6 +278,8 @@ export function SpbNetDemo() {
                       variant={cifid === exampleCif ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setCifid(exampleCif)}
+                      disabled={isLoading}
+                      className="rounded-full"
                     >
                       {exampleCif}
                     </Button>
@@ -237,25 +302,35 @@ export function SpbNetDemo() {
               </div>
             </div>
 
-            <div
-              ref={energyChartRef}
-              className="bg-muted rounded-lg"
-              style={{ 
-                width: '100%', 
-                aspectRatio: '1.5',
-                display: showEnergy ? 'block' : 'none'
-              }}
-            />
-            <div
-              ref={molViewerRef}
-              className="bg-muted rounded-lg"
-              style={{ 
-                width: '100%', 
-                aspectRatio: '1.5', 
-                position: 'relative',
-                display: showEnergy ? 'none' : 'block'
-              }}
-            />
+            <div className="relative">
+              {loadingStructure && (
+                <div className="absolute inset-0 flex items-center justify-center bg-muted/80 rounded-lg z-10">
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <span className="text-sm text-muted-foreground">Loading structure...</span>
+                  </div>
+                </div>
+              )}
+              <div
+                ref={energyChartRef}
+                className="bg-muted rounded-lg"
+                style={{ 
+                  width: '100%', 
+                  aspectRatio: '1.5',
+                  display: showEnergy ? 'block' : 'none'
+                }}
+              />
+              <div
+                ref={molViewerRef}
+                className="bg-muted rounded-lg"
+                style={{ 
+                  width: '100%', 
+                  aspectRatio: '1.5', 
+                  position: 'relative',
+                  display: showEnergy ? 'none' : 'block'
+                }}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -268,11 +343,21 @@ export function SpbNetDemo() {
                 <TabsTrigger value="intrinsic">Intrinsic</TabsTrigger>
               </TabsList>
 
-              <div
-                ref={boxPlotRef}
-                className="bg-white rounded-lg border"
-                style={{ width: '100%', aspectRatio: '1.3' }}
-              />
+              <div className="relative">
+                {loadingProperties && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg z-10">
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      <span className="text-sm text-muted-foreground">Loading properties...</span>
+                    </div>
+                  </div>
+                )}
+                <div
+                  ref={boxPlotRef}
+                  className="bg-white rounded-lg border"
+                  style={{ width: '100%', aspectRatio: '1.3' }}
+                />
+              </div>
             </Tabs>
 
             <div className="flex flex-col xl:flex-row gap-6 mt-6">
@@ -280,11 +365,21 @@ export function SpbNetDemo() {
                 <h3 className="text-lg font-bold text-center mb-2">
                   Attention score of {attnTask}
                 </h3>
-                <div
-                  ref={attnViewerRef}
-                  className="bg-muted rounded-lg"
-                  style={{ width: '100%', aspectRatio: '1.5', position: 'relative' }}
-                />
+                <div className="relative">
+                  {(loadingAttn || loadingStructure) && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted/80 rounded-lg z-10">
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <span className="text-sm text-muted-foreground">Loading attention...</span>
+                      </div>
+                    </div>
+                  )}
+                  <div
+                    ref={attnViewerRef}
+                    className="bg-muted rounded-lg"
+                    style={{ width: '100%', aspectRatio: '1.5', position: 'relative' }}
+                  />
+                </div>
                 <p className="text-sm text-center text-muted-foreground mt-2">
                   Larger atoms are more important
                 </p>
@@ -300,6 +395,7 @@ export function SpbNetDemo() {
                         variant={attnTask === task ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => setAttnTask(task)}
+                        disabled={loadingAttn}
                       >
                         {task}
                       </Button>
