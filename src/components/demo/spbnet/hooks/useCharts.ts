@@ -258,7 +258,11 @@ export function useEnergyChart(
         axisPointer: {
           lineStyle: { color: '#888' },
         },
-        viewControl: {},
+        viewControl: {
+          rotateSensitivity: 2,
+          panSensitivity: 1,
+          zoomSensitivity: 1,
+        },
       },
       series: [
         {
@@ -387,7 +391,11 @@ export function useEnergyChart(
             axisPointer: {
               lineStyle: { color: '#888' },
             },
-            viewControl: {},
+            viewControl: {
+              rotateSensitivity: 2,
+              panSensitivity: 1,
+              zoomSensitivity: 1,
+            },
           },
           series: [
             {
